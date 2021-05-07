@@ -48,7 +48,6 @@ public class Test {
 				int[] worst = sim1.runWorstFit();
 				memR[3] = Double.toString(worst[1] / worst[2]);
 				holeR[3] = Double.toString(worst[1] / worst[2]);
-				//Add rows to csv files
 				memRows.add(memR);
 				holeRows.add(holeR);
 			}
