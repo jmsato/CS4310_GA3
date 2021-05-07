@@ -340,5 +340,79 @@ public class Simulation {
 		physicalMemory = copyMemory;
 
 		return new int[] {totalMemoryUtilization, totalNumberOfHolesSearched, numberOfRequestsFulfilled};
-	}//end runSimulationFirstFit
+	}//end runSimulationBestFit
+	
+	/**
+	 * Runs the worst fit simulation.
+	 * @return Integer array with the total memory utilization, holes searched, and number of requests fulfilled.
+	 */
+	public int[] runSimulationWorstFit(){
+		int[] copyMemory=this.physicalMemory.clone(); //since it's primitive, we can do this
+		//currentAllocations, holesAllocations should be set in creation physicalMemory
+		int totalMemoryUtilization=0;
+		int totalNumberOfHolesSearched=0;
+		int numberOfRequestsFulfilled=0;
+
+		while(true){ //repeat x times
+
+			int s = getBlockSize(n); //s is the request size chosen from a normal distribution
+			//TODO decide if this should go before or after creation of a new request (really just depends on s)
+			if(currentAllocations + s > n) //repeat until request fails
+				break;
+			//TODO fix memUtil of request
+			Request currentRequest=new Request(s, get_memory_utilization()); //create a request of size s
+
+			//Worst Fit Search starts here
+			int searchIndex=0;
+			int worstIndex = -1;
+			while(searchIndex<=lastIndex){//start from firstIndex always, search until reach lastIndex filled
+				//should have cases for >0 and <0, if ==0, the coalescing of holes is incorrectly implemented
+				if(physicalMemory[searchIndex]<0){ //positive integer = allocated
+					totalNumberOfHolesSearched++;
+					if(Math.abs(physicalMemory[searchIndex]) >= s && (worstIndex == -1 || Math.abs(physicalMemory[searchIndex]) > Math.abs(physicalMemory[worstIndex]))){
+						worstIndex = searchIndex;
+					}
+					else{//hole wasn't big enough, move on
+						searchIndex++;
+					}
+				}
+				else{ //should be copyMemory[searchIndex]>0
+					searchIndex++;
+				}
+			}//ends while searchIndex
+			
+			//Do the allocation stuff here
+			if(worstIndex != -1) {
+				//TODO create allocate function, does it need an index???
+				allocate(currentRequest);
+				//TODO take out when create allocate function
+				holesAllocations-=s;
+				currentAllocations+=s;
+				numberOfRequestsFulfilled++;
+	
+				//TODO check calculations
+				totalMemoryUtilization+=s;
+				currentRequest.setMemoryUtilization(get_memory_utilization());
+				//TODO  decide what happens to currentRequest
+				//does it get added to a completedRequests list?
+				//do we just send it off to the garbage collector?
+				//what do :(
+			}
+			else { //means the request failed
+				break;
+			}
+			//request(s); //attempt to satisfy the request using chosen method; 
+			//count number of holes examined and average the count over the number of request operations
+			int randomIndex;
+			do{
+				randomIndex=random.nextInt(lastIndex); //select an occupied block i
+			}while(physicalMemory[randomIndex]>0);
+			//TODO  create release method
+			release(randomIndex);
+		}//end while(true)
+		
+		physicalMemory = copyMemory;
+
+		return new int[] {totalMemoryUtilization, totalNumberOfHolesSearched, numberOfRequestsFulfilled};
+	}//end runSimulationWorstFit
 }
