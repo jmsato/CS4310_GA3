@@ -33,5 +33,51 @@ public class Simulation {
         Request request = new Request (get_size_of_block(), get_memory_utilization());
     }
 
-   
+   public int[] runNextFit() {
+	   int[] mem = this.physicalMemory.clone(); //Copy the physical memory
+	   int totalMemoryUtilization = 0;
+	   int totalNumberOfHolesSearched = 0;
+	   int numberOfRequestsFulfilled = 50;
+	   int lastSearchIndex = 0; //Index of search where the last allocated block was
+	   
+	   while(true) {							//repeat x times
+		   int s = get_size_of_block(); 		//	choose random request size, s
+		   if(currentAllocations + s > n) {		//	repeat until request fails
+			   break;
+		   }
+		   
+		   Request currentRequest = new Request(s, get_memory_utilization()); //	do a request
+		   
+		   while(lastSearchIndex <= lastIndex) {
+			   if(mem[lastSearchIndex] < 0) { //negative integer = unallocated memory
+				   totalNumberOfHolesSearched++;
+				   if(Math.abs(mem[lastSearchIndex]) >= s) {
+					   allocate(currentRequest);
+					   holesAllocations -= s;
+					   currentAllocations += s;
+					   
+					   totalMemoryUtilization += s;
+					   currentRequest.setMemoryUtilization(get_memory_utilization());	//	record current memory util
+					   break;
+				   }
+				   else { //Hole was not big enough
+					   lastSearchIndex++;
+				   }
+			   }
+			   else { //positive integer = allocated memory
+				   lastSearchIndex++;
+			   }
+		   }
+		   
+		   int randomIndex; //index of an occupied block
+		   
+		   do {
+			   randomIndex = random.nextInt(lastIndex); //	select an occupied block i
+		   } while(mem[randomIndex] > 0);
+		   
+		   release(randomIndex);	//	release the occupied block
+	   }
+	   //Compute avgs for memory utilization and holes searched
+	   return new int[] {totalMemoryUtilization, totalNumberOfHolesSearched, numberOfRequestsFulfilled};
+   }
 }
