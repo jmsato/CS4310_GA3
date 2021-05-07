@@ -9,8 +9,8 @@ public class Simulation {
     private int s; // Size of block
     private int numberOfSpaceOcupied;
     private int[] physicalMemory; // Physical memory in simulation
-    private ArrayList<Integer> memUtil; 
-    private ArrayList<Integer> numHoles;
+    private int currentAllocations;
+    private int holesAllocations;
  
     
     public Simulation(int d, int v){
@@ -20,8 +20,9 @@ public class Simulation {
         this.s = 0;
         this.numberOfSpaceOcupied = 0;
         physicalMemory = null;
-        memUtil = new ArrayList<Integer>();    
-        numHoles = new ArrayList<Integer>();  
+        this.currentAllocations = 0;
+        this.holesAllocations = 0;
+       
     }
     
     /** Initialize memory to contain a set of blocks of normally distributed sizes
@@ -32,8 +33,7 @@ public class Simulation {
     	physicalMemory = new int[n];
     	physicalMemory[0] =-n; // 1 block has -n holes
     	for(int i=0; i<n; i++) {
-    		physicalMemory[i] = getBlockSize(n);  
-    		System.out.print(physicalMemory[i]+ " ");
+    		physicalMemory[i] =  generateHoleSize(n);  
     	}  
     }
     
@@ -51,8 +51,27 @@ public class Simulation {
     		int deallocated = physicalMemory[i]*-1;
     		physicalMemory[i] = deallocated;
       	}
-      	return physicalMemory;
+    	this.currentAllocations = n/2;
+    	this.holesAllocations = n/2;
+      	
+    	return physicalMemory;
      }
+    public void shiftZero() {
+    	
+    	int n = physicalMemory.length;
+    	for(int i=0; i<n; i++) {  	
+    		if(physicalMemory[i]==0) {    
+    			// Shift that index it the endIndex
+    			// Shift all elements 
+    		
+    		}
+    		
+    	}
+    	System.out.println();
+    	for(Integer i: physicalMemory) {
+    		System.out.print(i + " ");
+    	}
+    }
     
     public void printPhysicalMemory (int[] arr) {
     	for(Integer i: arr) {
@@ -82,7 +101,7 @@ public class Simulation {
     	int max = n-1;
         do {
             k = (int) (random.nextGaussian()*v+d);
-        } while ( k>=0 || k>max);
+        } while (  k<0 || k>max); // generate the value of hole size is in the range of [0, n-1]
         System.out.println(k);
         return k;
     }
@@ -90,12 +109,92 @@ public class Simulation {
     /**
      * Memory utilization is the ratio of space occupied by blocks divided by the total memory size n, and can vary from 0 to 1.
      */
-    public int memoryUtilization(int n){
+    public int getMemoryUtilization(int n){
         return numberOfSpaceOcupied/n;        
     }
     
-    
+//    public int[] runSimulationFirstFit(){
+//        int[] copyMemory=this.physicalMemory.clone(); //since it's primitive, we can do this
+//    	  //currentAllocations, holesAllocations should be set in creation physicalMemory    										
+//        int totalMemoryUtilization=0;
+//        int totalNumberOfHolesSearched=0;  				// what is the numberOfHolesSearched? 
+//        int numberOfRequestsFulfilled=50;				// Number of requests = 50 since we deallocated 50% of blocks in a memory? 
+//        
+//        int n = physicalMemory.length;
+//        while(true){ //repeat x times
+//          int s = getBlockSize(n); //s is the request size chosen from a normal distribution
+//          int memUtil = getMemoryUtilization(n);
+//         //TODO decide if this should go before or after creation of a new request (really just depends on s)
+//         if(currentAllocations+s <n) //repeat until request fails
+//             break;
+//         //TODO fix memUtil of request
+//         Request currentRequest=new Request(s, memUtil); //create a request of size s
+//         
+//         
+//         
+//         //First Fit Search starts here
+//         int searchIndex=0;
+//         while(searchIndex<=lastIndex){//start from firstIndex always, 
+//             //should have cases for >0 and <0, if ==0, the coalescing of holes is incorrectly implemented
+//             if(copyMemory[searchIndex]<0){ //positive integer = allocated
+//                 totalNumberOfHolesSearched++;//
+//                 if(Math.abs(copyMemory[searchIndex])>=s){
+//                     //TODO create allocate function   
+//                     allocate(currentRequest, searchIndex, s);
+//                     //TODO take out when create allocate function
+//                     holesAllocations-=s;
+//                     currentAllocations+=s;
+//                     
+//                     //TODO check calculations
+//                     totalMemoryUtilization+=s;
+//                     currentRequest.setMemoryUtilization(memUtil);
+//                     //TODO  decide what happens to currentRequest 
+//                     //does it get added to a completedRequests list?
+//                     //do we just send it off to the garbage collector?
+//                     //what do :(
+//                     break;
+//                 }
+//                 else{//hole wasn't big enough, move on
+//                     searchIndex++;
+//                 }
+//             }
+//             else{ //should be copyMemory[searchIndex]>0
+//                 searchIndex++;
+//             }
+//         }//ends while searchIndex
+//                     //request(s); //attempt to satisfy the request using chosen method; 
+//                     //count number of holes examined and average the count over the number of request operations
+//         
+//         do{
+//             int randomIndex=random.nextInt(lastIndex); //select an occupied block i
+//         }while(copyMemory[randomIndex]>0);
+//         //TODO  create release method
+//         release(randomIndex);
+//        }//end while(true)
+//         
+//        return new int[] {totalMemoryUtilization, totalNumberOfHolesSearched, numberOfRequestsFulfilled};
+//    }//end runSimulationFirstFit
    
+    /**
+     * @param request a request to be allocated in a physical memory
+     * @param currentLocation an index location to be allocated
+     * @paran blcokSize block size of a request*/
+    public void allocate(Request request, int currentLocation, int blockSize){
+    	boolean isMemFull = false;
+    	int i=0;
+    	while( i<physicalMemory.length && !isMemFull) {
+    		 if(physicalMemory[i] < 0 && (i < currentLocation) && (Math.abs(physicalMemory[i]) + i > currentLocation + blockSize)) {
+                 int next = Math.abs(physicalMemory[i]) + i;
+                 physicalMemory[i] = i - currentLocation;
+                 physicalMemory[currentLocation] = blockSize;
+                 physicalMemory[currentLocation + blockSize] = (currentLocation + blockSize) - next;
+                 isMemFull = true;
+	         }
+	         else {
+	        	 i = Math.abs(physicalMemory[i]) + i;
+	         }
+    	}	
+    }
     
    
    
