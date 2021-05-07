@@ -190,7 +190,7 @@ public class Simulation {
 		int totalMemoryUtilization = 0;
 		int totalNumberOfHolesSearched = 0;
 		int numberOfRequestsFulfilled = 50;
-		int lastSearchIndex = 0; //Index of search where the last allocated block was
+		int searchIndex = 0; //Index of search where the last allocated block was
 
 		while(true) {							//repeat x times
 			int s = getBlockSize(n); 			//	choose random request size, s
@@ -198,26 +198,49 @@ public class Simulation {
 				break;
 			}
 
+			int searched = 0; //Number of holes searched for circular memory
 			Request currentRequest = new Request(s, get_memory_utilization()); //	do a request
 
-			while(lastSearchIndex <= lastIndex) {
-				if(physicalMemory[lastSearchIndex] < 0) { //negative integer = unallocated memory
+			while(searched < lastIndex + 1) {
+				searched++;
+				if(physicalMemory[searchIndex] < 0) { //negative integer = unallocated memory
 					totalNumberOfHolesSearched++;
-					if(Math.abs(physicalMemory[lastSearchIndex]) >= s) {
+					if(Math.abs(physicalMemory[searchIndex]) >= s) {
 						allocate(currentRequest);
 						holesAllocations -= s;
 						currentAllocations += s;
 
 						totalMemoryUtilization += s;
 						currentRequest.setMemoryUtilization(get_memory_utilization());	//	record current memory util
+						
+						//Circular memory indices
+						if(searchIndex + 1 > lastIndex) {
+							searchIndex = 0;
+						}
+						else {
+							searchIndex++;
+						}
+						
 						break;
 					}
 					else { //Hole was not big enough
-						lastSearchIndex++;
+						//Circular memory indices
+						if(searchIndex + 1 > lastIndex) {
+							searchIndex = 0;
+						}
+						else {
+							searchIndex++;
+						}
 					}
 				}
 				else { //positive integer = allocated memory
-					lastSearchIndex++;
+					//Circular memory indices
+					if(searchIndex + 1 > lastIndex) {
+						searchIndex = 0;
+					}
+					else {
+						searchIndex++;
+					}
 				}
 			}
 
