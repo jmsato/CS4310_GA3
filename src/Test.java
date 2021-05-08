@@ -6,7 +6,7 @@ public class Test {
 	
 	public static void main(String[] args) {
 		Simulation sim = new Simulation(5, 2, 10);
-		sim.runSimulationBestFit();
+		sim.runSimulationWorstFit();
 //		System.out.println("Running Test.java file...");
 //		int runTests = 1;
 //		int numRequests = 200;
