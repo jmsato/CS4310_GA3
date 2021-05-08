@@ -12,8 +12,7 @@ public class Simulation {
 	private int currentAllocations;
 	private int holesAllocations;
 	private int numberOfSpaceOcupied;
-	private ArrayList<Integer> memUtil; 
-	private ArrayList<Integer> numHoles;
+	private ArrayList<Request> requestsList; 
 
 	public Simulation(int d, int v, int n) {
 		this.d = d;
@@ -21,10 +20,10 @@ public class Simulation {
 		this.physicalMemory = new int[n];
 		this.lastIndex=0;
 		this.n=n;
-		memUtil = new ArrayList<Integer>();    
-		numHoles = new ArrayList<Integer>();
+        this.random = new Random();
 		initializePhysicalMemory(n);
 		randomDeallocation();
+        createRequestsList(n);
 	}
 
 	// public Simulation(int d, int v){
@@ -49,8 +48,6 @@ public class Simulation {
 		this.physicalMemory = pm;
 		this.n=pm.length;
 		this.lastIndex=0;
-		memUtil = new ArrayList<Integer>();    
-		numHoles = new ArrayList<Integer>();  
 	}
 
 	//TODO for testing, remove in final code
@@ -112,7 +109,7 @@ public class Simulation {
 		int numberOfBlocksToBeDeallocated = lastIndex/2; //number of used indices divided by 2
 		Set<Integer> set = new HashSet<Integer>();
 		do {
-			set.add(random.nextInt(lastIndex-1)); // check for non-duplicates random index
+			set.add(random.nextInt(lastIndex+1)); // check for non-duplicates random index
 		}while (set.size()!= numberOfBlocksToBeDeallocated);
 
 		for(Integer i: set) {
@@ -129,6 +126,23 @@ public class Simulation {
 
 		return physicalMemory;
 	}
+
+    public void createRequestsList(int size){
+        this.requestsList= new ArrayList<Request>(size);
+        
+        for (int i=0; i<size; i++){
+            this.requestsList.add(new Request(getBlockSize(this.n),0.0));
+        }
+    }
+
+    public String requestListToString(){
+        String result ="Request List: \n";
+        for (Request r: this.requestsList){
+            result+= "\t" +r.toString()+"\n";
+        }
+        result += "]";
+        return result;
+    }
 
 
 	public int[] shiftZero() {
@@ -157,22 +171,12 @@ public class Simulation {
 	 * Values less than 1 and greater than n - 1 are discarded.
 	 */
 	public int getBlockSize (int n){
-		Random random = new Random();
 		int max = n-1;
 		do {
 			s = (int) (random.nextGaussian()*v+d);
 		} while(s>max || s<=0); // discard negative/zero values and n-1 values
 		return s;
 	}
-
-
-	// // Memory utilization is the ratio of space occupied by blocks divided by
-	// //the total memory size n, and can vary from 0 to 1.
-	// public double get_memory_utilization(int totalMemory){
-	//     //TODO  fix
-	//     return (double)totalMemory/(double)n;
-	// }
-
 
 
 	public void create_request () {
@@ -190,7 +194,6 @@ public class Simulation {
 		do {
 			k = (int) (random.nextGaussian()*v+d);
 		} while (  k<0 || k>max); // generate the value of hole size is in the range of [0, n-1]
-		//System.out.println(k);
 		return k;
 	}
 
