@@ -472,73 +472,142 @@ public class Simulation {
 	 * @return Integer array with the total memory utilization, holes searched, and number of requests fulfilled.
 	 */
 	public int[] runSimulationBestFit(){
-		int[] copyMemory=this.physicalMemory.clone(); //since it's primitive, we can do this
-		//currentAllocations, holesAllocations should be set in creation physicalMemory
-		int totalMemoryUtilization=0;
-		int totalNumberOfHolesSearched=0;
-		int numberOfRequestsFulfilled=0;
-		Random rand = new Random();
+		int[] copyMemory = this.physicalMemory.clone();
+		printPhysicalMemory();
 
-		while(true){ //repeat x times
-
-			int s = getBlockSize(n); //s is the request size chosen from a normal distribution
+		int totalMemoryUtilization = 0;
+		int totalNumberOfHolesSearched = 0;
+		int numberOfRequestsFulfilled = 0;
+		
+		nextStep:
+		for(int x = 0; x < 800; x++) { //repeat x times
+			System.out.println("x loop running: " + x);
+			int s = getBlockSize(this.n); //s is the request size chosen from a normal distribution
+			System.out.println("Request size: " + s);
 			//TODO decide if this should go before or after creation of a new request (really just depends on s)
-			if(currentAllocations + s > n) //repeat until request fails
-				break;
-			//TODO fix memUtil of request
-			Request currentRequest=new Request(s, getMemoryUtilization()); //create a request of size s
+			holes:
+			while(holesAllocations >= s){ //repeat until request fails
+				//TODO fix memUtil of request
+				Request currentRequest=new Request(s, getMemoryUtilization()); //create a request of size s      
 
-			//Best Fit Search starts here
-			int searchIndex=0;
-			int bestIndex = -1;
-			while(searchIndex<=lastIndex){//start from firstIndex always, search until reach lastIndex filled
-				//should have cases for >0 and <0, if ==0, the coalescing of holes is incorrectly implemented
-				if(physicalMemory[searchIndex]<0){ //positive integer = allocated
-					totalNumberOfHolesSearched++;
-					if(Math.abs(physicalMemory[searchIndex]) >= s && (bestIndex == -1 || Math.abs(physicalMemory[searchIndex]) < Math.abs(physicalMemory[bestIndex]))){
-						bestIndex = searchIndex;
+				//Best Fit Search starts here
+				int searchIndex = 0;
+				int bestIndex = -1;
+				while(searchIndex <= lastIndex){//start from firstIndex always, search until reach lastIndex filled
+					System.out.printf("Search Index Loop: %d, Best index: %d\n", searchIndex, bestIndex);
+					//should have cases for >0 and <0, if ==0, the coalescing of holes is incorrectly implemented
+					if(physicalMemory[searchIndex] < 0){ //positive integer = allocated
+						totalNumberOfHolesSearched++;//
+						if(Math.abs(physicalMemory[searchIndex]) >= s && (bestIndex == -1 || Math.abs(physicalMemory[searchIndex]) < Math.abs(physicalMemory[bestIndex]))) {
+							bestIndex = searchIndex;
+						}
+						else { //hole wasn't big enough, move on
+							searchIndex++;
+						}
 					}
-					else{//hole wasn't big enough, move on
+					else { //should be copyMemory[searchIndex]>0
 						searchIndex++;
 					}
+				}//ends while searchIndex
+				//At the end of the search and there is no hole big enough, so do a release
+				if(bestIndex == -1) {
+					break holes;
 				}
-				else{ //should be copyMemory[searchIndex]>0
-					searchIndex++;
+				else {
+					request(currentRequest, bestIndex);
+					numberOfRequestsFulfilled++;
+					//TODO check calculations
+					//totalMemoryUtilization+=s;
+					currentRequest.setMemoryUtilization(getMemoryUtilization());
+					printPhysicalMemory();
+					//TODO  decide what happens to currentRequest
+					//does it get added to a completedRequests list?
+					//do we just send it off to the garbage collector?
+					//what do :(
+					continue nextStep;
 				}
-			}//ends while searchIndex
-
-			//Do the allocation stuff here
-			if(bestIndex != -1) {
-				//TODO create allocate function, does it need an index???
-				request(currentRequest,searchIndex);
-				//TODO take out when create allocate function
-				holesAllocations-=s;
-				currentAllocations+=s;
-				numberOfRequestsFulfilled++;
-
-				//TODO check calculations
-				totalMemoryUtilization+=s;
-				currentRequest.setMemoryUtilization(getMemoryUtilization());
-				//TODO  decide what happens to currentRequest
-				//does it get added to a completedRequests list?
-				//do we just send it off to the garbage collector?
-				//what do :(
 			}
-			else { //means the request failed
-				break;
-			}
-			//request(s); //attempt to satisfy the request using chosen method; 
 			//count number of holes examined and average the count over the number of request operations
-			int randomIndex;
+			int randomIndex = 0;
 			do{
-				randomIndex=rand.nextInt(lastIndex+1); //select an occupied block i
-			}while(physicalMemory[randomIndex]<0);
+				randomIndex = random.nextInt(this.lastIndex + 1); //select an occupied block i
+			}while(this.physicalMemory[randomIndex] < 0);
+			System.out.printf("RandomIndex: %d\n", randomIndex);
+			totalMemoryUtilization += getMemoryUtilization();
 			release(randomIndex);
-		}//end while(true)
-
+			//TODO testing
+			printPhysicalMemory();
+		}//end steps loop
 		physicalMemory = copyMemory;
-
 		return new int[] {totalMemoryUtilization, totalNumberOfHolesSearched, numberOfRequestsFulfilled};
+		
+//		int[] copyMemory=this.physicalMemory.clone(); //since it's primitive, we can do this
+//		//currentAllocations, holesAllocations should be set in creation physicalMemory
+//		int totalMemoryUtilization=0;
+//		int totalNumberOfHolesSearched=0;
+//		int numberOfRequestsFulfilled=0;
+//		Random rand = new Random();
+//
+//		while(true){ //repeat x times
+//
+//			int s = getBlockSize(n); //s is the request size chosen from a normal distribution
+//			//TODO decide if this should go before or after creation of a new request (really just depends on s)
+//			if(currentAllocations + s > n) //repeat until request fails
+//				break;
+//			//TODO fix memUtil of request
+//			Request currentRequest=new Request(s, getMemoryUtilization()); //create a request of size s
+//
+//			//Best Fit Search starts here
+//			int searchIndex=0;
+//			int bestIndex = -1;
+//			while(searchIndex<=lastIndex){//start from firstIndex always, search until reach lastIndex filled
+//				//should have cases for >0 and <0, if ==0, the coalescing of holes is incorrectly implemented
+//				if(physicalMemory[searchIndex]<0){ //positive integer = allocated
+//					totalNumberOfHolesSearched++;
+//					if(Math.abs(physicalMemory[searchIndex]) >= s && (bestIndex == -1 || Math.abs(physicalMemory[searchIndex]) < Math.abs(physicalMemory[bestIndex]))){
+//						bestIndex = searchIndex;
+//					}
+//					else{//hole wasn't big enough, move on
+//						searchIndex++;
+//					}
+//				}
+//				else{ //should be copyMemory[searchIndex]>0
+//					searchIndex++;
+//				}
+//			}//ends while searchIndex
+//
+//			//Do the allocation stuff here
+//			if(bestIndex != -1) {
+//				//TODO create allocate function, does it need an index???
+//				request(currentRequest,searchIndex);
+//				//TODO take out when create allocate function
+//				holesAllocations-=s;
+//				currentAllocations+=s;
+//				numberOfRequestsFulfilled++;
+//
+//				//TODO check calculations
+//				totalMemoryUtilization+=s;
+//				currentRequest.setMemoryUtilization(getMemoryUtilization());
+//				//TODO  decide what happens to currentRequest
+//				//does it get added to a completedRequests list?
+//				//do we just send it off to the garbage collector?
+//				//what do :(
+//			}
+//			else { //means the request failed
+//				break;
+//			}
+//			//request(s); //attempt to satisfy the request using chosen method; 
+//			//count number of holes examined and average the count over the number of request operations
+//			int randomIndex;
+//			do{
+//				randomIndex=rand.nextInt(lastIndex+1); //select an occupied block i
+//			}while(physicalMemory[randomIndex]<0);
+//			release(randomIndex);
+//		}//end while(true)
+//
+//		physicalMemory = copyMemory;
+//
+//		return new int[] {totalMemoryUtilization, totalNumberOfHolesSearched, numberOfRequestsFulfilled};
 	}//end runSimulationBestFit
 
 	/**
