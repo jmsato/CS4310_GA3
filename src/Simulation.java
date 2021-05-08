@@ -384,78 +384,86 @@ public class Simulation {
 	 * @return Integer array with the total memory utilization, holes searched, and number of requests fulfilled.
 	 */
 	public int[] runSimulationNextFit() {
-		int[] copyMemory = this.physicalMemory.clone(); //Copy the physical memory
+		int[] copyMemory = this.physicalMemory.clone();
+		printPhysicalMemory();
+
 		int totalMemoryUtilization = 0;
 		int totalNumberOfHolesSearched = 0;
 		int numberOfRequestsFulfilled = 0;
-		int searchIndex = 0; //Index of search where the last allocated block was
-		Random rand = new Random();
+		int searchIndex = 0;
+		
+		nextStep:
+		for(int x = 0; x < 800; x++) { //repeat x times
+			System.out.println("x loop running: " + x);
+			int s = getBlockSize(this.n); //s is the request size chosen from a normal distribution
+			System.out.println("Request size: " + s);
+			//TODO decide if this should go before or after creation of a new request (really just depends on s)
+			holes:
+			while(holesAllocations >= s){ //repeat until request fails
+				//TODO fix memUtil of request
+				Request currentRequest=new Request(s, getMemoryUtilization()); //create a request of size s      
 
-		//Next fit simulation begins here
-		while(true) {							//repeat x times
-			int s = getBlockSize(n); 			//	choose random request size, s
-			if(currentAllocations + s > n) {		//	repeat until request fails
-				break;
-			}
-
-			int searched = 0; //Number of holes searched for circular memory
-			Request currentRequest = new Request(s, getMemoryUtilization()); //	do a request
-
-			while(searched < lastIndex + 1) {
-				searched++;
-				if(physicalMemory[searchIndex] < 0) { //negative integer = unallocated memory
-					totalNumberOfHolesSearched++;
-					if(Math.abs(physicalMemory[searchIndex]) >= s) {
-						request(currentRequest,searchIndex);
-						holesAllocations -= s;
-						currentAllocations += s;
-						numberOfRequestsFulfilled++;
-
-						totalMemoryUtilization += s;
-						currentRequest.setMemoryUtilization(getMemoryUtilization());	//	record current memory util
-
-						//Circular memory indices
+				//Next Fit Search starts here
+				int searched = 0;
+				while(searched < lastIndex + 1) { //Circular indices so don't search more than lastIndex times
+					searched++;
+					System.out.printf("Search Index Loop: %d, Number of indices searched: %d\n", searchIndex, searched);
+					//should have cases for >0 and <0, if ==0, the coalescing of holes is incorrectly implemented
+					if(physicalMemory[searchIndex] < 0){ //positive integer = allocated
+						totalNumberOfHolesSearched++;//
+						if(Math.abs(physicalMemory[searchIndex]) >= s){ 
+							request(currentRequest, searchIndex);
+							numberOfRequestsFulfilled++;
+							//TODO check calculations
+							//totalMemoryUtilization+=s;
+							currentRequest.setMemoryUtilization(getMemoryUtilization());
+							printPhysicalMemory();
+							//TODO  decide what happens to currentRequest
+							//does it get added to a completedRequests list?
+							//do we just send it off to the garbage collector?
+							//what do :(
+							continue nextStep;
+						}
+						else {//hole wasn't big enough, move on
+							if(searchIndex + 1 > lastIndex) {
+								searchIndex = 0;
+							}
+							else {
+								searchIndex++;
+							}
+						}
+					}
+					else { //should be copyMemory[searchIndex]>0
 						if(searchIndex + 1 > lastIndex) {
 							searchIndex = 0;
 						}
 						else {
 							searchIndex++;
 						}
-
-						break;
 					}
-					else { //Hole was not big enough
-						//Circular memory indices
-						if(searchIndex + 1 > lastIndex) {
-							searchIndex = 0;
-						}
-						else {
-							searchIndex++;
-						}
+					//At the end of the search and there is no hole big enough and do a release
+					if(searched == lastIndex + 1) {
+						break holes;
 					}
-				}
-				else { //positive integer = allocated memory
-					//Circular memory indices
-					if(searchIndex + 1 > lastIndex) {
-						searchIndex = 0;
-					}
-					else {
-						searchIndex++;
-					}
-				}
+				}//ends while searchIndex
 			}
-
-			int randomIndex; //index of an occupied block
-
+			//count number of holes examined and average the count over the number of request operations
+			int randomIndex = 0;
 			do{
-				randomIndex=rand.nextInt(lastIndex+1); //select an occupied block i
-			}while(physicalMemory[randomIndex]<0);
-
-			release(randomIndex);	//	release the occupied block
-		}
+				randomIndex = random.nextInt(this.lastIndex + 1); //select an occupied block i
+			}while(this.physicalMemory[randomIndex] < 0);
+			System.out.printf("RandomIndex: %d\n", randomIndex);
+			totalMemoryUtilization += getMemoryUtilization();
+			release(randomIndex);
+			//If after the release, the searchIndex is out of bounds, reset to the beginning of memory
+			if(searchIndex > lastIndex) {
+				searchIndex = 0;
+			}
+			//TODO testing
+			printPhysicalMemory();
+		}//end steps loop
+		
 		physicalMemory = copyMemory;
-
-		//Compute avgs for memory utilization and holes searched
 		return new int[] {totalMemoryUtilization, totalNumberOfHolesSearched, numberOfRequestsFulfilled};
 	}// end runSimulationNextFit
 
