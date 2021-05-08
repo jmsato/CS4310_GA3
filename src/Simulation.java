@@ -19,20 +19,25 @@ public class Simulation {
 		this.d = d;
 		this.v = v;
 		this.physicalMemory = new int[n];
+        this.lastIndex=0;
         this.n=n;
+        memUtil = new ArrayList<Integer>();    
+	 	numHoles = new ArrayList<Integer>();
+        initializePhysicalMemory(n);
 	}
 
-	public Simulation(int d, int v){
-		this.d = d;
-		this.v = v;
-		this.k = 0;
-		this.s = 0;
-		this.numberOfSpaceOcupied = 0;
-		physicalMemory = null;
-        this.n=0;
-		memUtil = new ArrayList<Integer>();    
-		numHoles = new ArrayList<Integer>();  
-	}
+	// public Simulation(int d, int v){
+	// 	this.d = d;
+	// 	this.v = v;
+	// 	this.k = 0;
+	// 	this.s = 0;
+	// 	this.numberOfSpaceOcupied = 0;
+	// 	physicalMemory = null;
+    //     this.n=0;
+	// 	memUtil = new ArrayList<Integer>();    
+	// 	numHoles = new ArrayList<Integer>();
+    //  initializePhysicalMemory(n);  
+	// }
     
     public Simulation(int[]pm){
 		this.d = d;
@@ -42,6 +47,7 @@ public class Simulation {
 		this.numberOfSpaceOcupied = 0;
 		this.physicalMemory = pm;
         this.n=pm.length;
+        this.lastIndex=0;
 		memUtil = new ArrayList<Integer>();    
 		numHoles = new ArrayList<Integer>();  
 	}
@@ -54,16 +60,46 @@ public class Simulation {
         this.physicalMemory=arr;
     }
 
-    /** Initialize memory to contain a set of blocks of normally distributed sizes
+    /** Initialize memory to contain a set of allocated blocks of normally distributed sizes
      *  (using d and v) and placed randomly throughout the memory
      * 	@param n size of physical memory 
      */
     public void initializePhysicalMemory (int n) {
-    	physicalMemory = new int[n];
-    	physicalMemory[0] =-n; // 1 block has -n holes
-    	for(int i=0; i<n; i++) {
-    		physicalMemory[i] =  getBlockSize(n);  
-    	}  
+        this.physicalMemory = new int[n];
+    	this.n=n;
+        this.physicalMemory[0] =-n; // 1 block has a hole of size n
+        this.holesAllocations=n;
+        this.currentAllocations=0;
+        int temp=0;
+        this.lastIndex=0;
+
+        while((this.lastIndex < n-1) &&this.currentAllocations<n){ //so this will check up to n-2, the last index [n-1] is not checked, only potentially assigned a hole
+            temp=getBlockSize(n);
+            if(this.currentAllocations+temp>n || this.holesAllocations<=0){
+                break;
+            }
+            this.physicalMemory[this.lastIndex]=temp;
+            this.holesAllocations-=temp;
+            this.currentAllocations+=temp;
+            this.physicalMemory[this.lastIndex+1]=this.holesAllocations*(-1);
+            this.lastIndex++;
+        }
+        //change the last index from a hole to an allocation so randomDeallocation can take care of holes
+        if( this.physicalMemory[this.lastIndex]<0){
+            this.physicalMemory[this.lastIndex]*=(-1);
+            this.currentAllocations+=this.physicalMemory[this.lastIndex];
+            this.holesAllocations=this.n-this.currentAllocations;
+        }
+        else if (this.lastIndex>0 && this.physicalMemory[this.lastIndex]==0){
+                this.lastIndex--;
+        }
+
+    	// for(int i=0; i<n; i++) {
+        //     temp=getBlockSize(n);
+        //     if(currentAllocations+temp>this.n)
+        //         break;
+    	// 	physicalMemory[i] =  getBlockSize(n);  
+    	// }  
     }
 
     /** 
@@ -111,7 +147,7 @@ public class Simulation {
         for(Integer i: this.physicalMemory) {
     		System.out.print(i+ " ");  		
     	}
-        System.out.println("\tLast Index: "+this.lastIndex);//TODO take out after testing
+        System.out.println("\tLast Index: "+this.lastIndex+" | Current Allocations: "+this.currentAllocations+" | Holes Allocations: "+this.holesAllocations);//TODO take out after testing
     }
     
     /**
@@ -209,7 +245,11 @@ public class Simulation {
             return -1; 
         if(physicalMemory[index]<+0)
             return -1; //it's already a hole
-        physicalMemory[index]*=(-1);
+        
+        this.holesAllocations+=this.physicalMemory[index];
+        this.currentAllocations-=this.physicalMemory[index];
+        this.physicalMemory[index]*=(-1);
+        
         if(index==0){
             if(index+1>=n){//if n=1 sort of scenario
                 return 1; 
@@ -289,24 +329,26 @@ public class Simulation {
 
    public int[] runSimulationFirstFit(){
        int[] copyMemory=this.physicalMemory.clone(); //since it's primitive, we can do this
+       printPhysicalMemory();
        //currentAllocations, holesAllocations should be set in creation physicalMemory
        int totalMemoryUtilization=0;
        int totalNumberOfHolesSearched=0;
        int numberOfRequestsFulfilled=0;
-       
+       Random rand = new Random();
+
        while(true){ //repeat x times
-        
+        System.out.println("True loop running");
         int s = getBlockSize(this.n); //s is the request size chosen from a normal distribution
         //TODO decide if this should go before or after creation of a new request (really just depends on s)
         if(currentAllocations+s<n) //repeat until request fails
             break;
         //TODO fix memUtil of request
-        Request currentRequest=new Request(s, getMemoryUtilization()); //create a request of size s
-              
+        Request currentRequest=new Request(s, getMemoryUtilization()); //create a request of size s      
         
         //First Fit Search starts here
         int searchIndex=0;
         while(searchIndex<=lastIndex){//start from firstIndex always, search until reach lastIndex filled
+            System.out.println("Search Index Loop");
             //should have cases for >0 and <0, if ==0, the coalescing of holes is incorrectly implemented
             if(physicalMemory[searchIndex]<0){ //positive integer = allocated
                 totalNumberOfHolesSearched++;//
@@ -338,10 +380,12 @@ public class Simulation {
                     //count number of holes examined and average the count over the number of request operations
         int randomIndex=0;
         do{
-            randomIndex=random.nextInt(lastIndex); //select an occupied block i
-        }while(physicalMemory[randomIndex]>0);
-        //TODO  create release method
+            randomIndex=rand.nextInt(this.lastIndex+1); //select an occupied block i
+        }while(this.physicalMemory[randomIndex]<0);
+        System.out.printf("RandomIndex: %d\n",randomIndex);
         release(randomIndex);
+        //TODO testing
+        printPhysicalMemory();
        }//end while(true)
         
        return new int[] {totalMemoryUtilization, totalNumberOfHolesSearched, numberOfRequestsFulfilled};

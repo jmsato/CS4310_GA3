@@ -2,14 +2,17 @@
 public class Test {
 
 	public static void main(String[] args) {
-		Simulation sm = new Simulation(100, 50);
 		int n = 10;
-		sm.initializePhysicalMemory (n);
-		int[] deallocated = sm.randomDeallocation (n);
-		for(Integer i: deallocated) {
-    		System.out.print(i+ " ");  		
-    	}
-		sm.shiftZero();
+		Simulation sm = new Simulation(1, 3, n);
+		//sm.initializePhysicalMemory (n);
+		sm.printPhysicalMemory();
+		System.out.println("first fit");
+		sm.runSimulationFirstFit();
+		//int[] deallocated = sm.randomDeallocation (n);
+		//for(Integer i: deallocated) {
+    	//	System.out.print(i+ " ");  		
+    	//}
+		//sm.shiftZero();
 		
 		
 	}
