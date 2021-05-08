@@ -1,5 +1,3 @@
-
-
 import java.util.*;
 
 public class Simulation {
@@ -64,8 +62,7 @@ public class Simulation {
     	physicalMemory = new int[n];
     	physicalMemory[0] =-n; // 1 block has -n holes
     	for(int i=0; i<n; i++) {
-    		physicalMemory[i] = getBlockSize(n);  
-    		System.out.print(physicalMemory[i]+ " ");
+    		physicalMemory[i] =  generateHoleSize(n);  
     	}  
     }
     
@@ -83,8 +80,28 @@ public class Simulation {
     		int deallocated = physicalMemory[i]*-1;
     		physicalMemory[i] = deallocated;
       	}
-      	return physicalMemory;
+    	this.currentAllocations = n/2;
+    	this.holesAllocations = n/2;
+      	
+    	return physicalMemory;
      }
+    public int[] shiftZero() {
+    	int j=0;
+    	int n = physicalMemory.length;
+    	for(int i=0; i<n; i++) {  	
+    		if(physicalMemory[i]!=0) {   
+    			int temp = physicalMemory[j];
+    			physicalMemory[j] = physicalMemory[i];
+    			physicalMemory[i] = temp;
+    			j++; 			
+    		}
+    	}
+    	System.out.println();
+    	for(Integer i: physicalMemory) {
+    		System.out.print(i + " ");
+    	}
+    	return physicalMemory;
+    }
     
     public void printPhysicalMemory () {
         for(Integer i: this.physicalMemory) {
@@ -126,7 +143,7 @@ public class Simulation {
     	int max = n-1;
         do {
             k = (int) (random.nextGaussian()*v+d);
-        } while ( k>=0 || k>max);
+        } while (  k<0 || k>max); // generate the value of hole size is in the range of [0, n-1]
         System.out.println(k);
         return k;
     }
@@ -134,9 +151,31 @@ public class Simulation {
     /**
      * Memory utilization is the ratio of space occupied by blocks divided by the total memory size n, and can vary from 0 to 1.
      */
-    public int memoryUtilization(int n){
+    public int getMemoryUtilization(int n){
         return numberOfSpaceOcupied/n;        
     }
+
+    /**
+     * @param request a request to be allocated in a physical memory
+     * @param currentLocation an index location to be allocated
+     * @param blockSize block size of a request*/
+    public void allocate(Request request, int currentLocation, int blockSize){
+    	boolean isMemFull = false;
+    	int i=0;
+    	while( i<physicalMemory.length && !isMemFull) {
+    		 if(physicalMemory[i] < 0 && (i < currentLocation) && (Math.abs(physicalMemory[i]) + i > currentLocation + blockSize)) {
+                 int next = Math.abs(physicalMemory[i]) + i;
+                 physicalMemory[i] = i - currentLocation;
+                 physicalMemory[currentLocation] = blockSize;
+                 physicalMemory[currentLocation + blockSize] = (currentLocation + blockSize) - next;
+                 isMemFull = true;
+	         }
+	         else {
+	        	 i = Math.abs(physicalMemory[i]) + i;
+	         }
+    	}	
+    }
+
 
     /**
      * Method that releases an allocated memory block from physicalMemory array
@@ -226,10 +265,14 @@ public class Simulation {
         }//end big if-elseif-else statement
     }//end release
 
-    //TODO fill in function
-    public void allocate(Request r){
+    public int lastIndex(int[] arr) {
 
-    }
+        // still working
+      
+         
+         
+         
+     }
 
    public int[] runSimulationFirstFit(){
        //int[] copyMemory=this.physicalMemory.clone(); //since it's primitive, we can do this
@@ -246,8 +289,7 @@ public class Simulation {
             break;
         //TODO fix memUtil of request
         Request currentRequest=new Request(s, get_memory_utilization()); //create a request of size s
-        
-        
+              
         
         //First Fit Search starts here
         int searchIndex=0;
@@ -290,6 +332,7 @@ public class Simulation {
        }//end while(true)
         
        return new int[] {totalMemoryUtilization, totalNumberOfHolesSearched, numberOfRequestsFulfilled};
-   }//end runSimulationFirstFit   
+   }//end runSimulationFirstFit
+    
    
 }
