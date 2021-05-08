@@ -40,8 +40,8 @@ public class Simulation {
 	// }
     
     public Simulation(int[]pm){
-		this.d = d;
-		this.v = v;
+		this.d = 1;
+		this.v = 1;
 		this.k = 0;
 		this.s = 0;
 		this.numberOfSpaceOcupied = 0;
@@ -256,7 +256,6 @@ public class Simulation {
             }
             else{
                 if (physicalMemory[index+1]<0){
-                    System.out.println("Hitting else of case 0");
                     physicalMemory[index]+=physicalMemory[index+1];
                     for(int i=index+1; i<=lastIndex; i++){ //shifting physicalMemory from [index+1] left 1 element]
                         if(i==lastIndex)
@@ -340,15 +339,16 @@ public class Simulation {
         System.out.println("True loop running");
         int s = getBlockSize(this.n); //s is the request size chosen from a normal distribution
         //TODO decide if this should go before or after creation of a new request (really just depends on s)
-        if(currentAllocations+s<n) //repeat until request fails
+        if(currentAllocations+s>n){ //repeat until request fails
             break;
+        }
         //TODO fix memUtil of request
         Request currentRequest=new Request(s, getMemoryUtilization()); //create a request of size s      
         
         //First Fit Search starts here
         int searchIndex=0;
         while(searchIndex<=lastIndex){//start from firstIndex always, search until reach lastIndex filled
-            System.out.println("Search Index Loop");
+            System.out.printf("Search Index Loop: %d", s);
             //should have cases for >0 and <0, if ==0, the coalescing of holes is incorrectly implemented
             if(physicalMemory[searchIndex]<0){ //positive integer = allocated
                 totalNumberOfHolesSearched++;//
@@ -387,7 +387,7 @@ public class Simulation {
         //TODO testing
         printPhysicalMemory();
        }//end while(true)
-        
+       physicalMemory = copyMemory;
        return new int[] {totalMemoryUtilization, totalNumberOfHolesSearched, numberOfRequestsFulfilled};
    }//end runSimulationFirstFit
    
