@@ -1,4 +1,5 @@
 
+
 public class Request {
 	private int size;
 	private double memoryUtilization;
