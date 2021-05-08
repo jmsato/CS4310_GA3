@@ -124,7 +124,7 @@ public class Simulation {
         }
     }
 
-    public String requestListToString(){
+    public String requestsListToString(){
         String result ="Request List: \n";
         for (Request r: this.requestsList){
             result+= "\t" +r.toString()+"\n";
@@ -132,7 +132,9 @@ public class Simulation {
         result += "]";
         return result;
     }
-
+    public ArrayList<Request> getRequestsList(){
+        return this.requestsList;
+    }
 
 	public int[] shiftZero() {
 		int j=0;
@@ -334,21 +336,35 @@ public class Simulation {
 	public int[] runSimulationFirstFit(){
 		int[] copyMemory = this.physicalMemory.clone();
 		printPhysicalMemory();
-
 		int totalMemoryUtilization = 0;
 		int totalNumberOfHolesSearched = 0;
 		int numberOfRequestsFulfilled = 0;
-		
+		int indexInRequests=0;
+
 		nextStep:
 		for(int x = 0; x < 800; x++) { //repeat x times
 			System.out.println("x loop running: " + x);
-			int s = getBlockSize(this.n); //s is the request size chosen from a normal distribution
-			System.out.println("Request size: " + s);
+			//int s = getBlockSize(this.n); //s is the request size chosen from a normal distribution
+			//System.out.println("Request size: " + s);
 			//TODO decide if this should go before or after creation of a new request (really just depends on s)
-			holes:
+			Request currentRequest;
+            int s;//	choose random request size, s
+            if(indexInRequests<this.requestsList.size()){//we have exceeded the number of requests
+                currentRequest=this.requestsList.get(indexInRequests);
+                s=currentRequest.getSize();
+                indexInRequests++;
+            }
+            else{
+                s=getBlockSize(n);
+                currentRequest = new Request(s, getMemoryUtilization()); //	do a request
+                requestsList.add(currentRequest);
+            }
+            System.out.printf("Current Reqeuest: %s | s: %d\n",currentRequest.toString(),s);
+            holes:
 			while(holesAllocations >= s){ //repeat until request fails
 				//TODO fix memUtil of request
-				Request currentRequest=new Request(s, getMemoryUtilization()); //create a request of size s      
+				
+                //Request currentRequest=new Request(s, getMemoryUtilization()); //create a request of size s      
 
 				//First Fit Search starts here
 				int searchIndex = 0;
@@ -409,17 +425,34 @@ public class Simulation {
 		int totalNumberOfHolesSearched = 0;
 		int numberOfRequestsFulfilled = 0;
 		int searchIndex = 0; //Index of search where the last allocated block was
+        int indexInRequests=0;
 		Random rand = new Random();
 
 		//Next fit simulation begins here
 		while(true) {							//repeat x times
-			int s = getBlockSize(n); 			//	choose random request size, s
+			
+            Request currentRequest;
+            int s;//	choose random request size, s
+            if(indexInRequests<this.requestsList.size()){//we have exceeded the number of requests
+                currentRequest=this.requestsList.get(indexInRequests);
+                s=currentRequest.getSize();
+                indexInRequests++;
+            }
+            else{
+                s=getBlockSize(n);
+                currentRequest = new Request(s, getMemoryUtilization()); //	do a request
+                requestsList.add(currentRequest);
+            }
+            System.out.printf("Current Reqeuest: %s | s: %d\n",currentRequest.toString(),s);
+
+            
+            //int s = getBlockSize(n); 			//	choose random request size, s
 			if(currentAllocations + s > n) {		//	repeat until request fails
 				break;
 			}
 
 			int searched = 0; //Number of holes searched for circular memory
-			Request currentRequest = new Request(s, getMemoryUtilization()); //	do a request
+			//Request currentRequest = new Request(s, getMemoryUtilization()); //	do a request
 
 			while(searched < lastIndex + 1) {
 				searched++;
@@ -489,16 +522,31 @@ public class Simulation {
 		int totalMemoryUtilization=0;
 		int totalNumberOfHolesSearched=0;
 		int numberOfRequestsFulfilled=0;
+        int indexInRequests=0;
 		Random rand = new Random();
 
 		while(true){ //repeat x times
 
-			int s = getBlockSize(n); //s is the request size chosen from a normal distribution
+            Request currentRequest;
+            int s;//	choose random request size, s
+            if(indexInRequests<this.requestsList.size()){//we have exceeded the number of requests
+                currentRequest=this.requestsList.get(indexInRequests);
+                s=currentRequest.getSize();
+                indexInRequests++;
+            }
+            else{
+                s=getBlockSize(n);
+                currentRequest = new Request(s, getMemoryUtilization()); //	do a request
+                requestsList.add(currentRequest);
+            }
+            System.out.printf("Current Reqeuest: %s | s: %d\n",currentRequest.toString(),s);
+
+			//int s = getBlockSize(n); //s is the request size chosen from a normal distribution
 			//TODO decide if this should go before or after creation of a new request (really just depends on s)
 			if(currentAllocations + s > n) //repeat until request fails
 				break;
 			//TODO fix memUtil of request
-			Request currentRequest=new Request(s, getMemoryUtilization()); //create a request of size s
+			//Request currentRequest=new Request(s, getMemoryUtilization()); //create a request of size s
 
 			//Best Fit Search starts here
 			int searchIndex=0;
@@ -563,16 +611,31 @@ public class Simulation {
 		int totalMemoryUtilization=0;
 		int totalNumberOfHolesSearched=0;
 		int numberOfRequestsFulfilled=0;
+        int indexInRequests=0;
 		Random rand = new Random();
 
 		while(true){ //repeat x times
 
-			int s = getBlockSize(n); //s is the request size chosen from a normal distribution
+            Request currentRequest;
+            int s;//	choose random request size, s
+            if(indexInRequests<this.requestsList.size()){//we have exceeded the number of requests
+                currentRequest=this.requestsList.get(indexInRequests);
+                s=currentRequest.getSize();
+                indexInRequests++;
+            }
+            else{
+                s=getBlockSize(n);
+                currentRequest = new Request(s, getMemoryUtilization()); //	do a request
+                requestsList.add(currentRequest);
+            }
+            System.out.printf("Current Reqeuest: %s | s: %d\n",currentRequest.toString(),s);
+
+			//int s = getBlockSize(n); //s is the request size chosen from a normal distribution
 			//TODO decide if this should go before or after creation of a new request (really just depends on s)
 			if(currentAllocations + s > n) //repeat until request fails
 				break;
 			//TODO fix memUtil of request
-			Request currentRequest=new Request(s, getMemoryUtilization()); //create a request of size s
+			//Request currentRequest=new Request(s, getMemoryUtilization()); //create a request of size s
 
 			//Worst Fit Search starts here
 			int searchIndex=0;
