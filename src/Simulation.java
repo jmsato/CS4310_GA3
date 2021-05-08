@@ -24,6 +24,7 @@ public class Simulation {
         memUtil = new ArrayList<Integer>();    
 	 	numHoles = new ArrayList<Integer>();
         initializePhysicalMemory(n);
+        randomDeallocation();
 	}
 
 	// public Simulation(int d, int v){
@@ -105,23 +106,24 @@ public class Simulation {
     /** 
      *  Number of blocks to be deallocated 50% of n
      * */
-    public int[] randomDeallocation (int n) {
+    public int[] randomDeallocation () {
     	Random random = new Random();
-    	int numberOfBlocksToBeDeallocated = n/2;
-    	Set<Integer> set = new HashSet<Integer>();
+    	//int numberOfBlocksToBeDeallocated = n/2;
+    	int numberOfBlocksToBeDeallocated = lastIndex/2; //number of used indices divided by 2
+        Set<Integer> set = new HashSet<Integer>();
        	do {
-    		set.add(random.nextInt(n-1)); // check for non-duplicates random index
+    		set.add(random.nextInt(lastIndex-1)); // check for non-duplicates random index
     	}while (set.size()!= numberOfBlocksToBeDeallocated);
-    	for(Integer i: set) {
-       		int deallocated = physicalMemory[i]*-1;
-    		physicalMemory[i] = deallocated;
+    	
+         for(Integer i: set) {
+       		release(i); //for each integer index in the set, release the memory
       	}
-    	for(Integer i: set) {
-    		if(physicalMemory[i]!=0) {
-    			holesAllocations++;
-    		}		
-    	}
-    	currentAllocations = n - holesAllocations;//TODO check calculation
+    	// for(Integer i: set) {
+    	// 	if(physicalMemory[i]!=0) {
+    	// 		holesAllocations++;
+    	// 	}		
+    	// }
+    	//currentAllocations = n - holesAllocations;//TODO check calculation
     	System.out.println("current allo: "+ currentAllocations);
     	System.out.println("holes allo: "+ holesAllocations);
       	
