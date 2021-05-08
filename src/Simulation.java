@@ -77,15 +77,22 @@ public class Simulation {
     		set.add(random.nextInt(n-1)); // check for non-duplicates random index
     	}while (set.size()!= numberOfBlocksToBeDeallocated);
     	for(Integer i: set) {
-    		int deallocated = physicalMemory[i]*-1;
+       		int deallocated = physicalMemory[i]*-1;
     		physicalMemory[i] = deallocated;
       	}
-    	this.currentAllocations = n/2;
-    	this.holesAllocations = n/2;
+    	for(Integer i: set) {
+    		if(physicalMemory[i]!=0) {
+    			holesAllocations++;
+    		}		
+    	}
+    	currentAllocations = n - holesAllocations;
+    	System.out.println("current allo: "+ currentAllocations);
+    	System.out.println("holes allo: "+ holesAllocations);
       	
     	return physicalMemory;
      }
-    public int[] shiftZero() {
+    
+     public int[] shiftZero() {
     	int j=0;
     	int n = physicalMemory.length;
     	for(int i=0; i<n; i++) {  	
@@ -95,10 +102,6 @@ public class Simulation {
     			physicalMemory[i] = temp;
     			j++; 			
     		}
-    	}
-    	System.out.println();
-    	for(Integer i: physicalMemory) {
-    		System.out.print(i + " ");
     	}
     	return physicalMemory;
     }
@@ -123,8 +126,8 @@ public class Simulation {
          return s;
     }
 
-    //  // Memory utilization is the ratio of space occupied by blocks divided by
-    // //the total memory size n, and can vary from 0 to 1.
+    // Memory utilization is the ratio of space occupied by blocks divided by
+    //the total memory size n, and can vary from 0 to 1.
     public double get_memory_utilization(int totalMemory){
         //TODO  fix
         return (double)totalMemory/(double)n;
@@ -144,7 +147,7 @@ public class Simulation {
         do {
             k = (int) (random.nextGaussian()*v+d);
         } while (  k<0 || k>max); // generate the value of hole size is in the range of [0, n-1]
-        System.out.println(k);
+    //System.out.println(k);
         return k;
     }
      
@@ -154,7 +157,19 @@ public class Simulation {
     public int getMemoryUtilization(int n){
         return numberOfSpaceOcupied/n;        
     }
-
+    
+    public int lastIndex(int[] arr) {
+        int last = 0;
+        for(int i=0; i<arr.length; i++) {
+        if(arr[i]==0) {
+                last = i;
+                break;
+            }
+        }
+        System.out.println("\n"+last);
+        return last;		
+    }
+   
     /**
      * @param request a request to be allocated in a physical memory
      * @param currentLocation an index location to be allocated
@@ -175,7 +190,6 @@ public class Simulation {
 	         }
     	}	
     }
-
 
     /**
      * Method that releases an allocated memory block from physicalMemory array
@@ -265,15 +279,6 @@ public class Simulation {
         }//end big if-elseif-else statement
     }//end release
 
-    public int lastIndex(int[] arr) {
-
-        // still working
-      
-         
-         
-         
-     }
-
    public int[] runSimulationFirstFit(){
        //int[] copyMemory=this.physicalMemory.clone(); //since it's primitive, we can do this
        //currentAllocations, holesAllocations should be set in creation physicalMemory
@@ -333,6 +338,5 @@ public class Simulation {
         
        return new int[] {totalMemoryUtilization, totalNumberOfHolesSearched, numberOfRequestsFulfilled};
    }//end runSimulationFirstFit
-    
    
 }
