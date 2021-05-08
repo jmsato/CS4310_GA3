@@ -134,7 +134,7 @@ public class Simulation {
     }
 
     public void create_request () {
-        Request request = new Request (get_size_of_block(), get_memory_utilization(currentAllocations));
+        Request request = new Request (getBlockSize(this.n), get_memory_utilization(currentAllocations));
     }
 
     /** 
@@ -154,8 +154,8 @@ public class Simulation {
     /**
      * Memory utilization is the ratio of space occupied by blocks divided by the total memory size n, and can vary from 0 to 1.
      */
-    public int getMemoryUtilization(int n){
-        return numberOfSpaceOcupied/n;        
+    public int getMemoryUtilization(){
+        return numberOfSpaceOcupied/this.n;        
     }
     
     public int lastIndex(int[] arr) {
@@ -174,7 +174,7 @@ public class Simulation {
      * @param request a request to be allocated in a physical memory
      * @param currentLocation an index location to be allocated
      * @param blockSize block size of a request*/
-    public void allocate(Request request, int currentLocation, int blockSize){
+    public void request(Request request, int currentLocation, int blockSize){
     	boolean isMemFull = false;
     	int i=0;
     	while( i<physicalMemory.length && !isMemFull) {
@@ -280,7 +280,7 @@ public class Simulation {
     }//end release
 
    public int[] runSimulationFirstFit(){
-       //int[] copyMemory=this.physicalMemory.clone(); //since it's primitive, we can do this
+       int[] copyMemory=this.physicalMemory.clone(); //since it's primitive, we can do this
        //currentAllocations, holesAllocations should be set in creation physicalMemory
        int totalMemoryUtilization=0;
        int totalNumberOfHolesSearched=0;
@@ -288,30 +288,30 @@ public class Simulation {
        
        while(true){ //repeat x times
         
-        int s = get_size_of_block(); //s is the request size chosen from a normal distribution
+        int s = getBlockSize(this.n); //s is the request size chosen from a normal distribution
         //TODO decide if this should go before or after creation of a new request (really just depends on s)
         if(currentAllocations+s<n) //repeat until request fails
             break;
         //TODO fix memUtil of request
-        Request currentRequest=new Request(s, get_memory_utilization()); //create a request of size s
+        Request currentRequest=new Request(s, getMemoryUtilization()); //create a request of size s
               
         
         //First Fit Search starts here
         int searchIndex=0;
         while(searchIndex<=lastIndex){//start from firstIndex always, search until reach lastIndex filled
             //should have cases for >0 and <0, if ==0, the coalescing of holes is incorrectly implemented
-            if(copyMemory[searchIndex]<0){ //positive integer = allocated
+            if(physicalMemory[searchIndex]<0){ //positive integer = allocated
                 totalNumberOfHolesSearched++;//
-                if(Math.abs(copyMemory[searchIndex])>=s){
+                if(Math.abs(physicalMemory[searchIndex])>=s){
                     //TODO create allocate function   
-                    allocate(currentRequest);
+                    request(currentRequest, searchIndex, 5); //TODO take out 5
                     //TODO take out when create allocate function
                     holesAllocations-=s;
                     currentAllocations+=s;
                     
                     //TODO check calculations
                     totalMemoryUtilization+=s;
-                    currentRequest.setMemoryUtilization(get_memory_utilization());
+                    currentRequest.setMemoryUtilization(getMemoryUtilization());
                     //TODO  decide what happens to currentRequest
                     //does it get added to a completedRequests list?
                     //do we just send it off to the garbage collector?
@@ -328,10 +328,10 @@ public class Simulation {
         }//ends while searchIndex
                     //request(s); //attempt to satisfy the request using chosen method; 
                     //count number of holes examined and average the count over the number of request operations
-        
+        int randomIndex=0;
         do{
-            int randomIndex=random.nextInt(lastIndex); //select an occupied block i
-        }while(copyMemory[randomIndex]>0);
+            randomIndex=random.nextInt(lastIndex); //select an occupied block i
+        }while(physicalMemory[randomIndex]>0);
         //TODO  create release method
         release(randomIndex);
        }//end while(true)
