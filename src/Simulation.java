@@ -24,6 +24,7 @@ public class Simulation {
         memUtil = new ArrayList<Integer>();    
 	 	numHoles = new ArrayList<Integer>();
         initializePhysicalMemory(n);
+        randomDeallocation();
 	}
 
 	// public Simulation(int d, int v){
@@ -105,23 +106,24 @@ public class Simulation {
     /** 
      *  Number of blocks to be deallocated 50% of n
      * */
-    public int[] randomDeallocation (int n) {
+    public int[] randomDeallocation () {
     	Random random = new Random();
-    	int numberOfBlocksToBeDeallocated = n/2;
-    	Set<Integer> set = new HashSet<Integer>();
+    	//int numberOfBlocksToBeDeallocated = n/2;
+    	int numberOfBlocksToBeDeallocated = lastIndex/2; //number of used indices divided by 2
+        Set<Integer> set = new HashSet<Integer>();
        	do {
-    		set.add(random.nextInt(n-1)); // check for non-duplicates random index
+    		set.add(random.nextInt(lastIndex-1)); // check for non-duplicates random index
     	}while (set.size()!= numberOfBlocksToBeDeallocated);
-    	for(Integer i: set) {
-       		int deallocated = physicalMemory[i]*-1;
-    		physicalMemory[i] = deallocated;
+    	
+         for(Integer i: set) {
+       		release(i); //for each integer index in the set, release the memory
       	}
-    	for(Integer i: set) {
-    		if(physicalMemory[i]!=0) {
-    			holesAllocations++;
-    		}		
-    	}
-    	currentAllocations = n - holesAllocations;//TODO check calculation
+    	// for(Integer i: set) {
+    	// 	if(physicalMemory[i]!=0) {
+    	// 		holesAllocations++;
+    	// 	}		
+    	// }
+    	//currentAllocations = n - holesAllocations;//TODO check calculation
     	System.out.println("current allo: "+ currentAllocations);
     	System.out.println("holes allo: "+ holesAllocations);
       	
@@ -236,7 +238,8 @@ public class Simulation {
     }
 
     /**
-     * Method that releases an allocated memory block from physicalMemory array
+     * Method that releases an allocated memory block from physicalMemory array. 
+     * Note: if release is asked to deallocate an index with a hole, it will not do so.
      * @param index an int value that specifies the index of the block in physicalMemory to be released
      * returns an int. 1 was a successful release, -1 meant there was a problem, the memory was not released(was already a hole, out of bounds, etc.)
      */
@@ -329,7 +332,8 @@ public class Simulation {
    public int[] runSimulationFirstFit(){
        int[] copyMemory=this.physicalMemory.clone(); //since it's primitive, we can do this
        printPhysicalMemory();
-       //currentAllocations, holesAllocations should be set in creation physicalMemory
+        Random random = new Random();
+
        int totalMemoryUtilization=0;
        int totalNumberOfHolesSearched=0;
        int numberOfRequestsFulfilled=0;
@@ -402,6 +406,7 @@ public class Simulation {
 		int totalNumberOfHolesSearched = 0;
 		int numberOfRequestsFulfilled = 0;
 		int searchIndex = 0; //Index of search where the last allocated block was
+        Random rand = new Random();
 
 		//Next fit simulation begins here
 		while(true) {							//repeat x times
@@ -459,9 +464,9 @@ public class Simulation {
 
 			int randomIndex; //index of an occupied block
 
-			do {
-				randomIndex = random.nextInt(lastIndex); //	select an occupied block i
-			} while(physicalMemory[randomIndex] > 0);
+			do{
+				randomIndex=rand.nextInt(lastIndex+1); //select an occupied block i
+			}while(physicalMemory[randomIndex]<0);
 
 			release(randomIndex);	//	release the occupied block
 		}
@@ -481,6 +486,7 @@ public class Simulation {
 		int totalMemoryUtilization=0;
 		int totalNumberOfHolesSearched=0;
 		int numberOfRequestsFulfilled=0;
+        Random rand = new Random();
 
 		while(true){ //repeat x times
 
@@ -534,9 +540,8 @@ public class Simulation {
 			//count number of holes examined and average the count over the number of request operations
 			int randomIndex;
 			do{
-				randomIndex=random.nextInt(lastIndex); //select an occupied block i
-			}while(physicalMemory[randomIndex]>0);
-			//TODO  create release method
+				randomIndex=rand.nextInt(lastIndex+1); //select an occupied block i
+			}while(physicalMemory[randomIndex]<0);
 			release(randomIndex);
 		}//end while(true)
 		
@@ -555,6 +560,7 @@ public class Simulation {
 		int totalMemoryUtilization=0;
 		int totalNumberOfHolesSearched=0;
 		int numberOfRequestsFulfilled=0;
+        Random rand = new Random();
 
 		while(true){ //repeat x times
 
@@ -608,9 +614,9 @@ public class Simulation {
 			//count number of holes examined and average the count over the number of request operations
 			int randomIndex;
 			do{
-				randomIndex=random.nextInt(lastIndex); //select an occupied block i
-			}while(physicalMemory[randomIndex]>0);
-			//TODO  create release method
+				randomIndex=rand.nextInt(lastIndex+1); //select an occupied block i
+			}while(physicalMemory[randomIndex]<0);
+
 			release(randomIndex);
 		}//end while(true)
 		
