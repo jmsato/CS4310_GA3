@@ -9,8 +9,9 @@ public class Simulation {
     private int s; // Size of block
     private int numberOfSpaceOcupied;
     private static int[] physicalMemory; // Physical memory in simulation
-    private int currentAllocations;
-    private int holesAllocations;
+    private static int currentAllocations;
+    private static int holesAllocations;
+   
  
     
     public Simulation(int d, int v){
@@ -48,11 +49,17 @@ public class Simulation {
     		set.add(random.nextInt(n-1)); // check for non-duplicates random index
     	}while (set.size()!= numberOfBlocksToBeDeallocated);
     	for(Integer i: set) {
-    		int deallocated = physicalMemory[i]*-1;
+       		int deallocated = physicalMemory[i]*-1;
     		physicalMemory[i] = deallocated;
       	}
-    	this.currentAllocations = n/2;
-    	this.holesAllocations = n/2;
+    	for(Integer i: set) {
+    		if(physicalMemory[i]!=0) {
+    			holesAllocations++;
+    		}		
+    	}
+    	currentAllocations = n - holesAllocations;
+    	System.out.println("current allo: "+ currentAllocations);
+    	System.out.println("holes allo: "+ holesAllocations);
       	
     	return physicalMemory;
      }
@@ -66,10 +73,6 @@ public class Simulation {
     			physicalMemory[i] = temp;
     			j++; 			
     		}
-    	}
-    	System.out.println();
-    	for(Integer i: physicalMemory) {
-    		System.out.print(i + " ");
     	}
     	return physicalMemory;
     }
@@ -103,7 +106,7 @@ public class Simulation {
         do {
             k = (int) (random.nextGaussian()*v+d);
         } while (  k<0 || k>max); // generate the value of hole size is in the range of [0, n-1]
-        System.out.println(k);
+//        System.out.println(k);
         return k;
     }
      
@@ -115,14 +118,17 @@ public class Simulation {
     }
     
     public int lastIndex(int[] arr) {
-
-       // still working
-     
-        
-       
-    	
-    	
+    	int last = 0;
+        for(int i=0; i<arr.length; i++) {
+    	if(arr[i]==0) {
+    		 last = i;
+    		 break;
+    	 }
+     }
+     System.out.println("\n"+last);
+     return last;		
     }
+    
     public int[] runSimulationFirstFit(){
         int[] copyMemory= Simulation.physicalMemory.clone(); //since it's primitive, we can do this
           
@@ -130,7 +136,7 @@ public class Simulation {
         int totalMemoryUtilization=0;
         int totalNumberOfHolesSearched=0;  			 
         int numberOfRequestsFulfilled=0;				 
-        
+     
         int n = physicalMemory.length;
         while(true){ //repeat x times
           int s = getBlockSize(n); //s is the request size chosen from a normal distribution
@@ -143,7 +149,7 @@ public class Simulation {
                           
          //First Fit Search starts here
          int searchIndex=0;
-         while(searchIndex<=lastIndex(physicalMemory, 0, n-1)){//start from firstIndex always, 
+         while(searchIndex<=lastIndex(physicalMemory)){//start from firstIndex always, 
              //should have cases for >0 and <0, if ==0, the coalescing of holes is incorrectly implemented
              if(copyMemory[searchIndex]<0){ //positive integer = allocated
                  totalNumberOfHolesSearched++;//
@@ -174,8 +180,10 @@ public class Simulation {
                      //request(s); //attempt to satisfy the request using chosen method; 
                      //count number of holes examined and average the count over the number of request operations
          
+         int randomIndex; 
+         Random random = new Random();
          do{
-             int randomIndex=random.nextInt(lastIndex); //select an occupied block i
+        	 randomIndex=random.nextInt(lastIndex(physicalMemory)); //select an occupied block i
          }while(copyMemory[randomIndex]>0);
          //TODO  create release method
          release(randomIndex);
@@ -203,6 +211,10 @@ public class Simulation {
 	        	 i = Math.abs(physicalMemory[i]) + i;
 	         }
     	}	
+    }
+    
+    public void release(int index) {
+    	
     }
     
    
