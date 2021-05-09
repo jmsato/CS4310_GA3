@@ -31,6 +31,37 @@ public class Test {
 			FileWriter holeWriter = new FileWriter("holeResults.csv");
 			holeWriter.append("First,Next,Best,Worst\n");
 			
+			/* Forgotten worst case */
+			System.out.println("Forgotten test case");
+			//Test Case 12: d = 100, v = 1
+			memRows.add(new String[]{"d = 100 and v = 1"});
+			holeRows.add(new String[]{"d = 100 and v = 1"});
+			for(int times = 0; times < runTests; times++) {	
+				//Create a new row for each test run
+				String[] memR = new String[4];
+				String[] holeR = new String[4]; 
+				//Run simulation
+				Simulation sim6 = new Simulation(100, 1, numRequests);
+				double[] first = sim6.runSimulationFirstFit();
+				memR[0] = Double.toString(first[0] / (first[2] * numRequests));
+				holeR[0] = Double.toString(first[1] / first[2]);
+				double[] next = sim6.runSimulationNextFit();
+				memR[1] = Double.toString(next[0] / (next[2] * numRequests));
+				holeR[1] = Double.toString(next[1] / next[2]);
+				double[] best = sim6.runSimulationBestFit();
+				memR[2] = Double.toString(best[0] / (best[2] * numRequests));
+				holeR[2] = Double.toString(best[1] / best[2]);
+				double[] worst = sim6.runSimulationWorstFit();
+				memR[3] = Double.toString(worst[0] / (worst[2] * numRequests));
+				holeR[3] = Double.toString(worst[1] / worst[2]);
+				//Add rows to csv files
+				memRows.add(memR);
+				holeRows.add(holeR);
+			}
+			memRows.add(new String[]{" "});
+			holeRows.add(new String[]{" "});
+			
+			
 			/* First fit test suite */
 			System.out.println("Running first fit test suite...");
 			memRows.add(new String[]{"First fit test suite:"});
