@@ -1,17 +1,16 @@
 import java.util.*;
 
 public class Simulation {
-	private int d; // Average request size
-	private int v; // Standard deviation
-	private int k; // Size of hole
-	private int s; // Size of block
 	private static Random random;
 	private int[] physicalMemory; // Physical memory in simulation
+	private int d; // Average request size
+	private int v; // Standard deviation
 	private int n; // Size of physical memory
 	private int lastIndex; //index of occupied element in array (can be hole or allocated block)
 	private int currentAllocations;
 	private int holesAllocations;
 	private ArrayList<Request> requestsList; 
+
 
 	public Simulation(int d, int v, int n) {
 		random = new Random();
@@ -29,8 +28,6 @@ public class Simulation {
 	public Simulation(int[]pm){
 		this.d = 1;
 		this.v = 1;
-		this.k = 0;
-		this.s = 0;
 		this.physicalMemory = pm;
 		this.n=pm.length;
 		this.lastIndex=0;
@@ -79,12 +76,6 @@ public class Simulation {
 			this.lastIndex--;
 		}
 
-		// for(int i=0; i<n; i++) {
-		//     temp=getBlockSize(n);
-		//     if(currentAllocations+temp>this.n)
-		//         break;
-		// 	physicalMemory[i] =  getBlockSize(n);  
-		// }  
 	}
 
 	/** 
@@ -104,14 +95,6 @@ public class Simulation {
 		for(Integer i: set) {
 			release(i); //for each integer index in the set, release the memory
 		}
-		// for(Integer i: set) {
-		// 	if(physicalMemory[i]!=0) {
-		// 		holesAllocations++;
-		// 	}		
-		// }
-		//currentAllocations = n - holesAllocations;//TODO check calculation
-		System.out.println("current allo: "+ currentAllocations);
-		System.out.println("holes allo: "+ holesAllocations);
 
 		return physicalMemory;
 	}
@@ -165,6 +148,7 @@ public class Simulation {
 	 */
 	public int getBlockSize (int n){
 		int max = n-1;
+		int s;
 		do {
 			s = (int) (random.nextGaussian()*v+d);
 		} while(s>max || s<=0); // discard negative/zero values and n-1 values
@@ -176,8 +160,8 @@ public class Simulation {
 	 * indicates the length of the hole. 
 	 */
 	public int generateHoleSize (int n){
-		Random random = new Random();
 		int max = n-1;
+		int k;
 		do {
 			k = (int) (random.nextGaussian()*v+d);
 		} while (  k<0 || k>max); // generate the value of hole size is in the range of [0, n-1]
@@ -187,8 +171,8 @@ public class Simulation {
 	/**
 	 * Memory utilization is the ratio of space occupied by blocks divided by the total memory size n, and can vary from 0 to 1.
 	 */
-	public int getMemoryUtilization(){
-		return currentAllocations/this.n;        
+	public double getMemoryUtilization(){
+		return (double)currentAllocations/(double)this.n;        
 	}
 
 	public int lastIndex(int[] arr) {
@@ -430,36 +414,7 @@ public class Simulation {
 		int numberOfRequestsFulfilled = 0;
 		int searchIndex = 0;
 		int indexInRequests=0;
-		/**
-		 * int searchIndex = 0; //Index of search where the last allocated block was
-        int indexInRequests=0;
-		Random rand = new Random();
 
-		//Next fit simulation begins here
-		while(true) {							//repeat x times
-
-            Request currentRequest;
-            int s;//	choose random request size, s
-            if(indexInRequests<this.requestsList.size()){//we have exceeded the number of requests
-                currentRequest=this.requestsList.get(indexInRequests);
-                s=currentRequest.getSize();
-                indexInRequests++;
-            }
-            else{
-                s=getBlockSize(n);
-                currentRequest = new Request(s, getMemoryUtilization()); //	do a request
-                requestsList.add(currentRequest);
-            }
-            System.out.printf("Current Reqeuest: %s | s: %d\n",currentRequest.toString(),s);
-
-
-			int searched = 0; //Number of holes searched for circular memory
-			//Request currentRequest = new Request(s, getMemoryUtilization()); //	do a request
-
-
-		 * 
-		 * 
-		 */
 		nextStep:
 			for(int x = 0; x < 800; x++) { //repeat x times
 				System.out.println("x loop running: " + x);
