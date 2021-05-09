@@ -107,6 +107,16 @@ public class Simulation {
 		}
 	}
 
+	public void sortRequestListAscending(){
+		Comparator<Request> bySize = (r1, r2) -> r1.getSize()-r2.getSize();
+		Collections.sort(this.requestsList, bySize);
+	}
+
+	public void sortRequestListDescending(){
+		Comparator<Request> reverseBySize = (r1, r2) -> r2.getSize()-r1.getSize();
+		Collections.sort(this.requestsList, reverseBySize);
+	}
+
 	public String requestsListToString(){
 		String result ="Request List: \n";
 		int index=0;
