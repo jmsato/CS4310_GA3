@@ -26,11 +26,26 @@ public class Simulation {
 	}
 
 	public Simulation(int[]pm){
+		random=new Random();
 		this.d = 1;
 		this.v = 1;
 		this.physicalMemory = pm;
 		this.n=pm.length;
 		this.lastIndex=0;
+		createRequestsList(n);
+	}
+
+	public Simulation(int d, int v, int n, double f){
+		random = new Random();
+		this.d = d;
+		this.v = v;
+		this.physicalMemory = new int[n];
+		this.lastIndex=0;
+		this.n=n;
+		this.random = new Random();
+		initializePhysicalMemory(n);
+		randomDeallocation();
+		createCustomAscendingList(n,f);
 	}
 
 	//TODO for testing, remove in final code
@@ -99,12 +114,47 @@ public class Simulation {
 		return physicalMemory;
 	}
 
+	/**
+	 * Method to create an ArrayList of Requests that will be used by all the runSimulation methods 
+	 * @param size int specifying the number of Requests to create
+	 */
 	public void createRequestsList(int size){
 		this.requestsList= new ArrayList<Request>(size);
 
 		for (int i=0; i<size; i++){
 			this.requestsList.add(new Request(getBlockSize(this.n),0.0));
 		}
+	}
+
+	/**
+	 * Method to create a custom ArrayList of Requests 
+	 * @param size int specifying the number of Requests to create
+	 * @param inc double to increment request size by. Should be a small double from size 0.1 to 0.5 for best results
+	 */
+	public void createCustomAscendingList(int size, double inc){
+		this.requestsList=new ArrayList<Request>(size);
+		double increment=inc;
+		double small=1.0;
+		for (int i=0;i<size;i++){
+			this.requestsList.add(new Request((int)small,0.0));
+			small+=increment;
+		}
+	}
+
+	/**
+	 * Method that sorts the Requests in ascending Order
+	 */
+	public void sortRequestListAscending(){
+		Comparator<Request> bySize = (r1, r2) -> r1.getSize()-r2.getSize();
+		Collections.sort(this.requestsList, bySize);
+	}
+
+	/**
+	 * Method that sorts the Requests in descending Order
+	 */
+	public void sortRequestListDescending(){
+		Comparator<Request> reverseBySize = (r1, r2) -> r2.getSize()-r1.getSize();
+		Collections.sort(this.requestsList, reverseBySize);
 	}
 
 	public String requestsListToString(){
