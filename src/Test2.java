@@ -35,13 +35,13 @@ public class Test2 {
 				String[] holeR = new String[8]; 
 				//Run simulation
 				Simulation sim6 = new Simulation(100, 1, numRequests);
-				System.out.println("Requests List size: " + sim6.getRequestsList().size());
+				//System.out.println("Requests List size: " + sim6.getRequestsList().size());
 				double[] first = sim6.runSimulationFirstFit();
 				memR[0] = Double.toString(first[0] / (first[2] * numRequests));
 				holeR[0] = Double.toString(first[1] / first[2]);
 				memR[1] = Double.toString(first[2] / numRequests);
 				holeR[1] = Double.toString(first[2] / numRequests);
-				System.out.println("Requests Fulfilled: " + first[2]);
+				//System.out.println("Requests Fulfilled: " + first[2]);
 				double[] next = sim6.runSimulationNextFit();
 				memR[2] = Double.toString(next[0] / (next[2] * numRequests));
 				holeR[2] = Double.toString(next[1] / next[2]);

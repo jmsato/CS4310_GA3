@@ -48,7 +48,7 @@ public class Simulation {
 		else if(f < 0)
 			createCustomDescendingList(d, v, n, f);
 	}
-	
+
 	public Simulation(int d, int v, int n, int convoy) {
 		random = new Random();
 		this.d = d;
@@ -74,7 +74,7 @@ public class Simulation {
 	public void setPhysicalMemory(int[]arr){
 		this.physicalMemory=arr;
 	}
-	
+
 	public void printRequestList() {
 		String list = "Request list: ";
 		for(Request r : this.requestsList) {
@@ -82,7 +82,7 @@ public class Simulation {
 		}
 		System.out.println(list);
 	}
-	
+
 	/** Initialize memory to contain a set of allocated blocks of normally distributed sizes
 	 *  (using d and v) and placed randomly throughout the memory
 	 * 	@param n size of physical memory 
@@ -166,7 +166,7 @@ public class Simulation {
 			small+=increment;
 		}
 	}
-	
+
 	/**
 	 * Method to create a custom ArrayList of Requests whose request size slowly decrease
 	 * @param mean Average request size
@@ -183,7 +183,7 @@ public class Simulation {
 			large+=increment;
 		}
 	}
-	
+
 	/**
 	 * Method to create a custom ArrayList of Requests where there are a bunch of large ones, then a bunch of small ones
 	 * @param size int specifying the number of Requests to create
@@ -199,7 +199,7 @@ public class Simulation {
 			}
 		}
 	}
-	
+
 	/**
 	 * Method to create a custom ArrayList of Requests where there are a bunch of small ones, then a bunch of large ones
 	 * @param size int specifying the number of Requests to create
@@ -449,57 +449,28 @@ public class Simulation {
 		int copyHoles = holesAllocations;
 		int copyCurr = currentAllocations;
 		int copyLast = lastIndex;
-		
-		//printPhysicalMemory();
-		
+
+
 		double totalMemoryUtilization = 0;
 		int totalNumberOfHolesSearched = 0;
 		int numberOfRequestsFulfilled = 0;
 		int indexInRequests=0;
 
 		nextStep:
-			for(int x = 0; x < 800; x++) { //repeat x times
-				//System.out.println("x loop running: " + x);
-				//int s = getBlockSize(this.n); //s is the request size chosen from a normal distribution
-				//System.out.println("Request size: " + s);
-				//TODO decide if this should go before or after creation of a new request (really just depends on s)
-				Request currentRequest;
-				int s;//	choose random request size, s
-				if(indexInRequests<this.requestsList.size()){//we have exceeded the number of requests
-					currentRequest=this.requestsList.get(indexInRequests);
-					s=currentRequest.getSize();
-					indexInRequests++;
-				}
-				else{
-					s=getBlockSize(n);
-					currentRequest = new Request(s, getMemoryUtilization()); //	do a request
-					requestsList.add(currentRequest);
-				}
-				//System.out.printf("Current Reqeuest: %s | s: %d\n",currentRequest.toString(),s);
+			for(Request currentRequest: requestsList) { 
 				holes:
-					while(holesAllocations >= s){ //repeat until request fails
-						//TODO fix memUtil of request
-
-						//Request currentRequest=new Request(s, getMemoryUtilization()); //create a request of size s      
-
+					while(holesAllocations >= currentRequest.getSize()){ //repeat until request fails
 						//First Fit Search starts here
 						int searchIndex = 0;
 						while(searchIndex <= lastIndex){//start from firstIndex always, search until reach lastIndex filled
-							//System.out.printf("Search Index Loop: %d\n", searchIndex);
-							//should have cases for >0 and <0, if ==0, the coalescing of holes is incorrectly implemented
 							if(physicalMemory[searchIndex] < 0){ //positive integer = allocated
 								totalNumberOfHolesSearched++;//
-								if(Math.abs(physicalMemory[searchIndex]) >= s){ 
+								if(Math.abs(physicalMemory[searchIndex]) >= currentRequest.getSize()){ 
 									request(currentRequest, searchIndex);
 									numberOfRequestsFulfilled++;
 									//TODO check calculations
 									//totalMemoryUtilization+=s;
 									currentRequest.setMemoryUtilization(getMemoryUtilization());
-									//printPhysicalMemory();
-									//TODO  decide what happens to currentRequest
-									//does it get added to a completedRequests list?
-									//do we just send it off to the garbage collector?
-									//what do :(
 									continue nextStep;
 								}
 								else {//hole wasn't big enough, move on
@@ -520,17 +491,14 @@ public class Simulation {
 				do{
 					randomIndex = random.nextInt(this.lastIndex + 1); //select an occupied block i
 				}while(this.physicalMemory[randomIndex] < 0);
-				//System.out.printf("RandomIndex: %d\n", randomIndex);
 				totalMemoryUtilization += currentAllocations;
 				release(randomIndex);
-				//TODO testing
-				//printPhysicalMemory();
 			}//end steps loop
 		physicalMemory = copyMemory;
 		holesAllocations = copyHoles;
 		currentAllocations = copyCurr;
 		lastIndex = copyLast;
-		
+
 		return new double[] {totalMemoryUtilization, totalNumberOfHolesSearched, numberOfRequestsFulfilled};
 	}//end runSimulationFirstFit
 
@@ -544,8 +512,6 @@ public class Simulation {
 		int copyHoles = holesAllocations;
 		int copyCurr = currentAllocations;
 		int copyLast = lastIndex;
-		
-		//printPhysicalMemory();
 
 		double totalMemoryUtilization = 0;
 		int totalNumberOfHolesSearched = 0;
@@ -554,50 +520,21 @@ public class Simulation {
 		int indexInRequests=0;
 
 		nextStep:
-			for(int x = 0; x < 800; x++) { //repeat x times
-				//System.out.println("x loop running: " + x);
-				//int s = getBlockSize(this.n); //s is the request size chosen from a normal distribution
-				//System.out.println("Request size: " + s);
-				Request currentRequest;
-				int s;//	choose random request size, s
-				if(indexInRequests<this.requestsList.size()){//we have exceeded the number of requests
-					currentRequest=this.requestsList.get(indexInRequests);
-					s=currentRequest.getSize();
-					indexInRequests++;
-				}
-				else{
-					s=getBlockSize(n);
-					currentRequest = new Request(s, getMemoryUtilization()); //	do a request
-					requestsList.add(currentRequest);
-				}
-				//System.out.printf("Current Request: %s | Request Size s: %d\n",currentRequest.toString(),s);
-
-
-				//TODO decide if this should go before or after creation of a new request (really just depends on s)
+			for(Request currentRequest: requestsList) {
+				int s = currentRequest.getSize();
 				holes:
-					while(holesAllocations >= s){ //repeat until request fails
-						//TODO fix memUtil of request
-						//Request currentRequest=new Request(s, getMemoryUtilization()); //create a request of size s      
+					while(holesAllocations >= s){ //repeat until request fails    
 
 						//Next Fit Search starts here
 						int searched = 0;
 						while(searched < lastIndex + 1) { //Circular indices so don't search more than lastIndex times
 							searched++;
-							//System.out.printf("Search Index Loop: %d, Number of indices searched: %d\n", searchIndex, searched);
-							//should have cases for >0 and <0, if ==0, the coalescing of holes is incorrectly implemented
 							if(physicalMemory[searchIndex] < 0){ //positive integer = allocated
 								totalNumberOfHolesSearched++;//
 								if(Math.abs(physicalMemory[searchIndex]) >= s){ 
 									request(currentRequest, searchIndex);
 									numberOfRequestsFulfilled++;
-									//TODO check calculations
-									//totalMemoryUtilization+=s;
 									currentRequest.setMemoryUtilization(getMemoryUtilization());
-									//printPhysicalMemory();
-									//TODO  decide what happens to currentRequest
-									//does it get added to a completedRequests list?
-									//do we just send it off to the garbage collector?
-									//what do :(
 									continue nextStep;
 								}
 								else {//hole wasn't big enough, move on
@@ -628,22 +565,19 @@ public class Simulation {
 				do{
 					randomIndex = random.nextInt(this.lastIndex + 1); //select an occupied block i
 				}while(this.physicalMemory[randomIndex] < 0);
-				//System.out.printf("RandomIndex: %d\n", randomIndex);
 				totalMemoryUtilization += currentAllocations;
 				release(randomIndex);
 				//If after the release, the searchIndex is out of bounds, reset to the beginning of memory
 				if(searchIndex > lastIndex) {
 					searchIndex = 0;
 				}
-				//TODO testing
-				//printPhysicalMemory();
 			}//end steps loop
 
 		physicalMemory = copyMemory;
 		holesAllocations = copyHoles;
 		currentAllocations = copyCurr;
 		lastIndex = copyLast;
-		
+
 		return new double[] {totalMemoryUtilization, totalNumberOfHolesSearched, numberOfRequestsFulfilled};
 	}// end runSimulationNextFit
 
@@ -656,7 +590,7 @@ public class Simulation {
 		int copyHoles = holesAllocations;
 		int copyCurr = currentAllocations;
 		int copyLast = lastIndex;
-		
+
 		//printPhysicalMemory();
 
 		double totalMemoryUtilization = 0;
@@ -665,36 +599,14 @@ public class Simulation {
 		int indexInRequests=0;
 
 		nextStep:
-			for(int x = 0; x < 800; x++) { //repeat x times
-				//System.out.println("x loop running: " + x);
-				//int s = getBlockSize(this.n); //s is the request size chosen from a normal distribution
-				//System.out.println("Request size: " + s);
-				Request currentRequest;
-				int s;//	choose random request size, s
-				if(indexInRequests<this.requestsList.size()){//we have exceeded the number of requests
-					currentRequest=this.requestsList.get(indexInRequests);
-					s=currentRequest.getSize();
-					indexInRequests++;
-				}
-				else{
-					s=getBlockSize(n);
-					currentRequest = new Request(s, getMemoryUtilization()); //	do a request
-					requestsList.add(currentRequest);
-				}
-				//System.out.printf("Current Request: %s | s: %d\n",currentRequest.toString(),s);
-
-				//TODO decide if this should go before or after creation of a new request (really just depends on s)
+			for(Request currentRequest: requestsList) {//for(int x = 0; x < 800; x++) { //repeat x times
+				int s = currentRequest.getSize();
 				holes:
 					while(holesAllocations >= s){ //repeat until request fails
-						//TODO fix memUtil of request
-						//Request currentRequest=new Request(s, getMemoryUtilization()); //create a request of size s      
-
 						//Best Fit Search starts here
 						int searchIndex = 0;
 						int bestIndex = -1;
 						while(searchIndex <= lastIndex){//start from firstIndex always, search until reach lastIndex filled
-							//System.out.printf("Search Index Loop: %d, Best index: %d\n", searchIndex, bestIndex);
-							//should have cases for >0 and <0, if ==0, the coalescing of holes is incorrectly implemented
 							if(physicalMemory[searchIndex] < 0){ //positive integer = allocated
 								totalNumberOfHolesSearched++;//
 								if(Math.abs(physicalMemory[searchIndex]) >= s && (bestIndex == -1 || Math.abs(physicalMemory[searchIndex]) < Math.abs(physicalMemory[bestIndex]))) {
@@ -715,18 +627,10 @@ public class Simulation {
 						else {
 							request(currentRequest, bestIndex);
 							numberOfRequestsFulfilled++;
-							//TODO check calculations
-							//totalMemoryUtilization+=s;
 							currentRequest.setMemoryUtilization(getMemoryUtilization());
-							//printPhysicalMemory();
-							//TODO  decide what happens to currentRequest
-							//does it get added to a completedRequests list?
-							//do we just send it off to the garbage collector?
-							//what do :(
 							continue nextStep;
 						}
 					}
-				//count number of holes examined and average the count over the number of request operations
 				int randomIndex = 0;
 				do{
 					randomIndex = random.nextInt(this.lastIndex + 1); //select an occupied block i
@@ -734,14 +638,12 @@ public class Simulation {
 				//System.out.printf("RandomIndex: %d\n", randomIndex);
 				totalMemoryUtilization += currentAllocations;
 				release(randomIndex);
-				//TODO testing
-				//printPhysicalMemory();
 			}//end steps loop
 		physicalMemory = copyMemory;
 		holesAllocations = copyHoles;
 		currentAllocations = copyCurr;
 		lastIndex = copyLast;
-		
+
 		return new double[] {totalMemoryUtilization, totalNumberOfHolesSearched, numberOfRequestsFulfilled};
 	}//end runSimulationBestFit
 
@@ -754,45 +656,24 @@ public class Simulation {
 		int copyHoles = holesAllocations;
 		int copyCurr = currentAllocations;
 		int copyLast = lastIndex;
-		
+
 		//printPhysicalMemory();
 
 		double totalMemoryUtilization = 0;
 		int totalNumberOfHolesSearched = 0;
 		int numberOfRequestsFulfilled = 0;
-		int indexInRequests=0;
 
 		nextStep:
-			for(int x = 0; x < 800; x++) { //repeat x times
-			//	System.out.println("x loop running: " + x);
-				//int s = getBlockSize(this.n); //s is the request size chosen from a normal distribution
-				//System.out.println("Request size: " + s);
-
-				Request currentRequest;
-				int s;//	choose random request size, s
-				if(indexInRequests<this.requestsList.size()){//we have exceeded the number of requests
-					currentRequest=this.requestsList.get(indexInRequests);
-					s=currentRequest.getSize();
-					indexInRequests++;
-				}
-				else{
-					s=getBlockSize(n);
-					currentRequest = new Request(s, getMemoryUtilization()); //	do a request
-					requestsList.add(currentRequest);
-				}
-			//	System.out.printf("Current Request: %s | s: %d\n",currentRequest.toString(),s);
-				//TODO decide if this should go before or after creation of a new request (really just depends on s)
+			for(Request currentRequest: requestsList) {
+				int s = currentRequest.getSize();
 				holes:
 					while(holesAllocations >= s){ //repeat until request fails
-						//TODO fix memUtil of request
 						//Request currentRequest = new Request(s, getMemoryUtilization()); //create a request of size s      
 
 						//Best Fit Search starts here
 						int searchIndex = 0;
 						int worstIndex = -1;
-						while(searchIndex <= lastIndex){//start from firstIndex always, search until reach lastIndex filled
-						//	System.out.printf("Search Index Loop: %d, Worst index: %d\n", searchIndex, worstIndex);
-							//should have cases for >0 and <0, if ==0, the coalescing of holes is incorrectly implemented
+						while(searchIndex <= lastIndex){
 							if(physicalMemory[searchIndex] < 0){ //positive integer = allocated
 								totalNumberOfHolesSearched++;//
 								if(Math.abs(physicalMemory[searchIndex]) >= s && (worstIndex == -1 || Math.abs(physicalMemory[searchIndex]) > Math.abs(physicalMemory[worstIndex]))) {
@@ -813,14 +694,7 @@ public class Simulation {
 						else {
 							request(currentRequest, worstIndex);
 							numberOfRequestsFulfilled++;
-							//TODO check calculations
-							//totalMemoryUtilization+=s;
 							currentRequest.setMemoryUtilization(getMemoryUtilization());
-							//printPhysicalMemory();
-							//TODO  decide what happens to currentRequest
-							//does it get added to a completedRequests list?
-							//do we just send it off to the garbage collector?
-							//what do :(
 							continue nextStep;
 						}
 					}
@@ -829,17 +703,14 @@ public class Simulation {
 				do{
 					randomIndex = random.nextInt(this.lastIndex + 1); //select an occupied block i
 				}while(this.physicalMemory[randomIndex] < 0);
-				//System.out.printf("RandomIndex: %d\n", randomIndex);
 				totalMemoryUtilization += currentAllocations;
 				release(randomIndex);
-				//TODO testing
-				//printPhysicalMemory();
-			}//end steps loop
+			}
 		physicalMemory = copyMemory;
 		holesAllocations = copyHoles;
 		currentAllocations = copyCurr;
 		lastIndex = copyLast;
-		
+
 		return new double[] {totalMemoryUtilization, totalNumberOfHolesSearched, numberOfRequestsFulfilled};
 	}//end runSimulationWorstFit
 }
